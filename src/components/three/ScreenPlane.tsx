@@ -52,8 +52,9 @@ export const ScreenPlane: VFC = () => {
 
 	const vec = new THREE.Vector2()
 	useFrame(({ size, mouse }) => {
-		datas.rotation && (shader.uniforms.u_time.value += 0.005)
-		shader.uniforms.u_aspect.value = size.width / size.height
+  datas.rotation && (shader.uniforms.u_time.value += 0.005)
+  // Match the actual canvas aspect to keep the sphere perfectly circular
+  shader.uniforms.u_aspect.value = size.width / size.height
 		shader.uniforms.u_mouse.value.lerp(vec.set(mouse.x / 2, mouse.y / 2), 0.05)
 		shader.uniforms.u_scale.value.set(datas.scaleX, datas.scaleY, datas.scaleZ)
 		shader.uniforms.u_distortion.value = datas.distortion

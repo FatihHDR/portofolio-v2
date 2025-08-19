@@ -5,6 +5,7 @@ body {
 		'Droid Sans', 'Helvetica Neue', sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	background: radial-gradient(1200px 600px at 50% 40%, rgba(30,80,120,.25), transparent 60%) #061826;
 }
 
 code {
@@ -14,4 +15,98 @@ code {
 * {
 	box-sizing: border-box;
 	overflow: hidden;
+}
+
+:root {
+	--fg: rgba(200, 230, 255, 0.9);
+	--muted: rgba(200, 230, 255, 0.6);
+}
+
+/* Cinemascope 2.39:1 letterbox container */
+.viewport-cinemascope {
+	position: relative;
+	width: 100vw;
+	height: 100vh;
+}
+.viewport-cinemascope__content {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	/* Keep 2.39:1 based on width so wide screens letterbox (top/bottom) */
+	width: 100vw;
+	height: min(100vh, calc(100vw / 2.39));
+}
+.letterbox__bar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: calc((100vh - min(100vh, calc(100vw / 2.39))) / 2);
+	background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.85));
+	pointer-events: none;
+}
+.letterbox__bar--top { top: 0; }
+.letterbox__bar--bottom { bottom: 0; }
+
+.overlay {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-rows: 1fr auto;
+	pointer-events: none;
+}
+
+.overlay__center {
+	display: grid;
+	place-items: center;
+	text-align: center;
+	padding-top: clamp(40px, 12vh, 160px);
+}
+
+.hero__title {
+	margin: 0;
+	color: var(--fg);
+	font-family: 'Montserrat', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+	font-weight: 300;
+	text-transform: uppercase;
+	letter-spacing: clamp(6px, 1.2vw, 24px);
+	font-size: clamp(28px, 8vw, 120px);
+	text-shadow:
+		0 0 6px rgba(64, 200, 255, .25),
+		0 0 18px rgba(32, 128, 255, .2),
+		0 0 40px rgba(0, 120, 255, .15);
+	mix-blend-mode: screen;
+}
+
+.hero__subtitle {
+	margin: 18px 0 0;
+	color: var(--muted);
+	font-size: clamp(10px, 1.5vw, 18px);
+	letter-spacing: .6em;
+	text-transform: uppercase;
+}
+
+.overlay__bottom {
+	display: flex;
+	justify-content: center;
+	gap: clamp(16px, 6vw, 64px);
+	padding: 36px 24px 24px;
+}
+
+.nav__link {
+	pointer-events: auto;
+	color: var(--muted);
+	text-decoration: none;
+	font-size: clamp(10px, 1.4vw, 14px);
+	letter-spacing: .4em;
+	text-transform: uppercase;
+	transition: color .2s ease, text-shadow .2s ease;
+}
+.nav__link:hover {
+	color: var(--fg);
+	text-shadow: 0 0 8px rgba(80, 200, 255, .25);
+}
+
+/* ensure external anchor buttons are interactive */
+a[rel~="noopener"] {
+	pointer-events: auto;
 }

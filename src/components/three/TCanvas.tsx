@@ -22,7 +22,7 @@ export const TCanvas: VFC = () => {
 				<FocusPass />
 			</Effects>
 			{/* helper */}
-			<Stats />
+			{process.env.NODE_ENV !== 'production' && <Stats />}
 		</Canvas>
 	)
 }
