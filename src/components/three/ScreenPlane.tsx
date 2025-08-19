@@ -64,8 +64,9 @@ export const ScreenPlane: VFC = () => {
   // Internal state for subtle random motion
   const motionRef = useRef({
     // rotation
-    speed: 0.01,
-    targetSpeed: 0.01,
+  // start slower
+  speed: 0.003,
+  targetSpeed: 0.003,
     // scales
     targetScale: new THREE.Vector3(datas.scaleX, datas.scaleY, datas.scaleZ),
     // distortion
@@ -90,7 +91,8 @@ export const ScreenPlane: VFC = () => {
       motionRef.current.nextShuffle = now + nextIn
 
       // wild rotation speed and direction
-      motionRef.current.targetSpeed = THREE.MathUtils.randFloat(0.01, 0.06) * (Math.random() < 0.5 ? -1 : 1)
+  // choose much smaller rotation speeds so auto-rotation is gentler
+  motionRef.current.targetSpeed = THREE.MathUtils.randFloat(0.002, 0.02) * (Math.random() < 0.5 ? -1 : 1)
 
       // wild random scale: allow much smaller or much larger values
       const jitter = () => THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.3, 15.0), 0.3, 15.0)
@@ -206,8 +208,8 @@ float gyroid(in vec3 p, float t) {
 }
 
 float sdf(vec3 p) {
-  // amplify rotation by u_rot_amp so rotation is more noticeable
-  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.3 * u_rot_amp);
+  // reduce rotation multiplier so automatic rotation is slower
+  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.12 * u_rot_amp);
   float t = (sin(u_time * 0.5 + PI / 2.0) + 1.0) * 0.5; // 0 ~ 1
   
   float sphere = sdSphere(p, 1.0);
