@@ -264,7 +264,7 @@ void main() {
     float d = length(rayPos);
     d = smoothstep(0.5, 1.0, d);
     color = mix(vec3(1.0, 0.5, 0.0), vec3(0.00, 0.00, 0.05), d);
-    
+
     float _fresnel = fresnel(ray, normal);
     color += vec3(0.00, 0.48, 0.80) * _fresnel * 0.8;
   }

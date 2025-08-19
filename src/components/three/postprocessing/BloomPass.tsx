@@ -8,10 +8,10 @@ extend({ UnrealBloomPass })
 
 const datas = {
 	enabled: true,
-	exposure: 0.7,
-	strength: 2,
-	radius: 0.5,
-	threshold: 0.6
+	exposure: 1.0,
+	strength: 3.2,
+	radius: 0.7,
+	threshold: 0.35
 }
 
 export const BloomPass: VFC = () => {
