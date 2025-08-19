@@ -2,6 +2,7 @@ import React, { VFC } from 'react';
 import { TCanvas } from './three/TCanvas';
 import { Hero } from './Hero';
 import { LinkIconButton } from './LinkIconButton';
+import BackgroundAudio from './BackgroundAudio';
 
 export const App: VFC = () => {
 	return (
@@ -12,6 +13,7 @@ export const App: VFC = () => {
 
 			{/* 2.39:1 content area */}
 			<div className="viewport-cinemascope__content" style={{ position: 'relative' }}>
+				<BackgroundAudio />
 				<TCanvas />
 				<Hero />
 				<LinkIconButton
