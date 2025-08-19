@@ -6,7 +6,7 @@ export const Hero: VFC = () => {
       <header className="overlay__center">
   <h1 className="hero__title">FATAHILLAH AL-FATIH</h1>
         <p className="hero__subtitle">
-          CREATIVE\u00A0\u00A0|\u00A0\u00A0TECHNOLOGIST\u00A0\u00A0|\u00A0\u00A0DEVELOPER
+          CREATIVE&nbsp;&nbsp;|&nbsp;&nbsp;TECHNOLOGIST&nbsp;&nbsp;|&nbsp;&nbsp;DEVELOPER
         </p>
       </header>
 
