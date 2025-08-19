@@ -121,7 +121,8 @@ export const ScreenPlane: VFC = () => {
 
   // smooth camera & rotation amplitude
   // increase lerp for camera so zooms are more noticeable
-  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.12)
+  // slow the camera zoom smoothing so zoom in/out feels more gradual
+  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.04)
   // slightly faster for rotation amplitude as well
   motionRef.current.rotAmp = lerp(motionRef.current.rotAmp, motionRef.current.targetRotAmp, 0.06)
 
