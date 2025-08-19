@@ -1,6 +1,6 @@
 {
 	"name": "r3f-gyroid-sphere-operable",
-	"homepage": "https://nemutas.github.io/r3f-gyroid-sphere-operable/",
+	"homepage": ".",
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
