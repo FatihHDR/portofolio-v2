@@ -39,7 +39,7 @@ export const ScreenPlane: VFC = () => {
   gui.addNumericSlider(datas, 'scaleZ', 0, 20, 0.1, 'scale z').listen()
   gui.addNumericSlider(datas, 'distortion', 0, 2, 0.01).listen()
   gui.addCheckBox(datas, 'autoZoom').listen()
-  gui.addNumericSlider(datas, 'camZ', 0.5, 12, 0.1, 'camera z').listen()
+  gui.addNumericSlider(datas, 'camZ', 0.8, 5, 0.1, 'camera z').listen()
   gui.addNumericSlider(datas, 'rotAmp', 0.0, 3.0, 0.01, 'rotation amp').listen()
 	gui.addCheckBox(datas, 'creepiness').listen()
 	gui.addCheckBox(datas, 'rotation')
@@ -99,11 +99,11 @@ export const ScreenPlane: VFC = () => {
       // wild distortion up to >1 for strong effect
       motionRef.current.targetDistortion = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.0, 1.2), 0, 1.2)
 
-      // camera wild zoom (in/out)
-      motionRef.current.targetCamZ = THREE.MathUtils.randFloat(0.6, 8.0)
+  // camera wild zoom (in/out) - allow very close (zoom in) but cap zoom-out to a reasonable max
+  motionRef.current.targetCamZ = THREE.MathUtils.randFloat(0.8, 5.0)
 
-      // rotation amplitude wildness
-      motionRef.current.targetRotAmp = THREE.MathUtils.randFloat(0.05, 2.5)
+  // rotation amplitude wildness (bigger range)
+  motionRef.current.targetRotAmp = THREE.MathUtils.randFloat(0.05, 3.5)
     }
 
     // smooth approach to targets
@@ -120,8 +120,14 @@ export const ScreenPlane: VFC = () => {
   if (datas.rotation) shader.uniforms.u_time.value += motionRef.current.speed
 
   // smooth camera & rotation amplitude
-  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.02)
-  motionRef.current.rotAmp = lerp(motionRef.current.rotAmp, motionRef.current.targetRotAmp, 0.02)
+  // increase lerp for camera so zooms are more noticeable
+  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.12)
+  // slightly faster for rotation amplitude as well
+  motionRef.current.rotAmp = lerp(motionRef.current.rotAmp, motionRef.current.targetRotAmp, 0.06)
+
+  // if autoZoom is enabled, expose the animated camZ/rotAmp to datas so GUI updates
+  if (datas.autoZoom) datas.camZ = THREE.MathUtils.clamp(motionRef.current.camZ, 0.8, 5.0)
+  datas.rotAmp = motionRef.current.rotAmp
 
     // Match the actual canvas aspect to keep the sphere perfectly circular
     shader.uniforms.u_aspect.value = size.width / size.height
