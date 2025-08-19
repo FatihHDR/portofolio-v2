@@ -24,7 +24,10 @@ const datas = {
 	scaleZ: 5,
 	distortion: 0,
 	creepiness: false,
-	rotation: true
+  rotation: true,
+  autoZoom: true,
+  camZ: 3.5,
+  rotAmp: 0.3
 }
 
 export const ScreenPlane: VFC = () => {
@@ -35,6 +38,9 @@ export const ScreenPlane: VFC = () => {
   gui.addNumericSlider(datas, 'scaleY', 0, 20, 0.1, 'scale y').listen()
   gui.addNumericSlider(datas, 'scaleZ', 0, 20, 0.1, 'scale z').listen()
   gui.addNumericSlider(datas, 'distortion', 0, 2, 0.01).listen()
+  gui.addCheckBox(datas, 'autoZoom').listen()
+  gui.addNumericSlider(datas, 'camZ', 0.5, 12, 0.1, 'camera z').listen()
+  gui.addNumericSlider(datas, 'rotAmp', 0.0, 3.0, 0.01, 'rotation amp').listen()
 	gui.addCheckBox(datas, 'creepiness').listen()
 	gui.addCheckBox(datas, 'rotation')
 
@@ -45,6 +51,8 @@ export const ScreenPlane: VFC = () => {
 			u_mouse: { value: new THREE.Vector2(0, 0) },
 			u_scale: { value: new THREE.Vector3() },
 			u_distortion: { value: datas.distortion },
+      u_cam_z: { value: datas.camZ },
+      u_rot_amp: { value: datas.rotAmp },
 			u_creepiness: { value: datas.creepiness }
 		},
 		vertexShader: vertexShader,
@@ -61,7 +69,13 @@ export const ScreenPlane: VFC = () => {
     // scales
     targetScale: new THREE.Vector3(datas.scaleX, datas.scaleY, datas.scaleZ),
     // distortion
-    targetDistortion: THREE.MathUtils.clamp(datas.distortion, 0, 1),
+  targetDistortion: THREE.MathUtils.clamp(datas.distortion, 0, 1),
+  // camera zoom
+  camZ: datas.camZ,
+  targetCamZ: datas.camZ,
+  // rotation amplitude (multiplies rotation applied in shader)
+  rotAmp: datas.rotAmp,
+  targetRotAmp: datas.rotAmp,
     // timing
     nextShuffle: 0,
   })
@@ -84,6 +98,12 @@ export const ScreenPlane: VFC = () => {
 
       // wild distortion up to >1 for strong effect
       motionRef.current.targetDistortion = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.0, 1.2), 0, 1.2)
+
+      // camera wild zoom (in/out)
+      motionRef.current.targetCamZ = THREE.MathUtils.randFloat(0.6, 8.0)
+
+      // rotation amplitude wildness
+      motionRef.current.targetRotAmp = THREE.MathUtils.randFloat(0.05, 2.5)
     }
 
     // smooth approach to targets
@@ -96,14 +116,20 @@ export const ScreenPlane: VFC = () => {
     datas.scaleZ = lerp(datas.scaleZ, motionRef.current.targetScale.z, 0.04)
     datas.distortion = lerp(datas.distortion, motionRef.current.targetDistortion, 0.04)
 
-    // advance time for rotation only if enabled
-    if (datas.rotation) shader.uniforms.u_time.value += motionRef.current.speed
+  // advance time for rotation only if enabled
+  if (datas.rotation) shader.uniforms.u_time.value += motionRef.current.speed
+
+  // smooth camera & rotation amplitude
+  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.02)
+  motionRef.current.rotAmp = lerp(motionRef.current.rotAmp, motionRef.current.targetRotAmp, 0.02)
 
     // Match the actual canvas aspect to keep the sphere perfectly circular
     shader.uniforms.u_aspect.value = size.width / size.height
     shader.uniforms.u_mouse.value.lerp(vec.set(mouse.x / 2, mouse.y / 2), 0.05)
     shader.uniforms.u_scale.value.set(datas.scaleX, datas.scaleY, datas.scaleZ)
     shader.uniforms.u_distortion.value = datas.distortion
+  shader.uniforms.u_cam_z.value = datas.camZ
+  shader.uniforms.u_rot_amp.value = datas.rotAmp
     shader.uniforms.u_creepiness.value = datas.creepiness
   })
 
@@ -129,6 +155,8 @@ uniform float u_aspect;
 uniform vec2 u_mouse;
 uniform vec3 u_scale;
 uniform float u_distortion;
+uniform float u_cam_z;
+uniform float u_rot_amp;
 uniform bool u_creepiness;
 varying vec2 v_uv;
 
@@ -171,7 +199,8 @@ float gyroid(in vec3 p, float t) {
 }
 
 float sdf(vec3 p) {
-  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.3);
+  // amplify rotation by u_rot_amp so rotation is more noticeable
+  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.3 * u_rot_amp);
   float t = (sin(u_time * 0.5 + PI / 2.0) + 1.0) * 0.5; // 0 ~ 1
   
   float sphere = sdSphere(p, 1.0);
@@ -200,7 +229,8 @@ void main() {
   ray = rotate(ray, vec3(1.0, 0.0, 0.0), m.y);
   ray = rotate(ray, vec3(0.0, 1.0, 0.0), -m.x);
 
-  vec3 camPos = vec3(0.0, 0.0, 3.5);
+  // camera z is controllable
+  vec3 camPos = vec3(0.0, 0.0, u_cam_z);
   
   vec3 rayPos = camPos;
   float totalDist = 0.0;
