@@ -59,76 +59,6 @@ export const ScreenPlane: VFC = () => {
 		fragmentShader: fragmentShader
 	}
 
-  const bgShader: THREE.Shader = {
-    uniforms: {
-      u_time: { value: 0 },
-      u_aspect: { value: 1 },
-    },
-    vertexShader: `
-    varying vec2 v_uv;
-    void main() {
-      v_uv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-    }
-    `,
-    fragmentShader: `
-    uniform float u_time;
-    uniform float u_aspect;
-    varying vec2 v_uv;
-
-    // simple hash / noise
-    float hash(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-    }
-
-    float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      vec2 u = f * f * (3.0 - 2.0 * f);
-      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
-
-    void main() {
-      // scale UV to get many static grains
-      vec2 uv = v_uv * vec2(u_aspect, 1.0);
-      float scale = 100.0;
-
-      // base noise (per-pixel static)
-      float n = noise(uv * scale + vec2(u_time * 30.0, u_time * 15.0));
-
-      // additional high-frequency grain
-      float g = hash(uv * scale * 2.0 + vec2(u_time * 120.0));
-
-      // scanline effect
-      float scan = sin((v_uv.y * 200.0) + u_time * 60.0) * 0.06;
-
-      // chromatic offsets (tiny) to simulate channel separation
-      float r = noise((uv + vec2(0.0012, 0.0)) * scale + vec2(u_time * 30.0));
-      float gg = noise((uv + vec2(-0.0008, 0.0)) * scale + vec2(u_time * 30.0));
-      float b = noise((uv + vec2(0.0002, 0.0015)) * scale + vec2(u_time * 30.0));
-
-      float staticCol = clamp(mix(n, g, 0.25) + scan, 0.0, 1.0);
-
-      // mild flicker over time
-      float flicker = 0.75 + 0.25 * sin(u_time * 2.0 + hash(uv));
-
-      vec3 color = vec3(r, gg, b) * staticCol * flicker;
-
-      // boost contrast a bit
-      color = pow(color, vec3(1.5));
-
-      // subtle tint to avoid pure grey if desired
-      color = mix(vec3(0.04), color, 0.95);
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-    `
-  }
-
   const vec = new THREE.Vector2()
 
   // Internal state for subtle random motion
@@ -200,11 +130,8 @@ export const ScreenPlane: VFC = () => {
   if (datas.autoZoom) datas.camZ = THREE.MathUtils.clamp(motionRef.current.camZ, 0.8, 5.0)
   datas.rotAmp = motionRef.current.rotAmp
 
-  // Match the actual canvas aspect to keep the sphere perfectly circular
-  shader.uniforms.u_aspect.value = size.width / size.height
-  // update background shader aspect + time
-  bgShader.uniforms.u_aspect.value = size.width / size.height
-  bgShader.uniforms.u_time.value = now
+    // Match the actual canvas aspect to keep the sphere perfectly circular
+    shader.uniforms.u_aspect.value = size.width / size.height
     shader.uniforms.u_mouse.value.lerp(vec.set(mouse.x / 2, mouse.y / 2), 0.05)
     shader.uniforms.u_scale.value.set(datas.scaleX, datas.scaleY, datas.scaleZ)
     shader.uniforms.u_distortion.value = datas.distortion
@@ -213,18 +140,11 @@ export const ScreenPlane: VFC = () => {
     shader.uniforms.u_creepiness.value = datas.creepiness
   })
 
-  return (
-    <>
-      {/* background TV static plane placed slightly behind */}
-      <Plane args={[2, 2]} position={[0, 0, -0.6]} renderOrder={0}>
-        <shaderMaterial args={[bgShader]} depthTest={true} depthWrite={false} />
-      </Plane>
-      {/* main procedural plane (transparent where there's no geometry so bg shows through) */}
-      <Plane args={[2, 2]} position={[0, 0, -0.5]} renderOrder={1}>
-        <shaderMaterial args={[shader]} transparent={true} depthWrite={false} />
-      </Plane>
-    </>
-  )
+	return (
+		<Plane args={[2, 2]}>
+			<shaderMaterial args={[shader]} />
+		</Plane>
+	)
 }
 
 const vertexShader = `
@@ -338,7 +258,6 @@ void main() {
   cLen = 1.0 - smoothstep(0.0, 0.7, cLen);
   color *= vec3(cLen);
 
-  // if we DID hit the geometry, shade it normally and set opaque alpha
   if(totalDist < tMax) {
     vec3 normal = calcNormal(rayPos);
     float diff = dot(vec3(1.0), normal);
@@ -349,11 +268,8 @@ void main() {
 
     float _fresnel = fresnel(ray, normal);
     color += vec3(0.00, 0.48, 0.80) * _fresnel * 0.8;
-    gl_FragColor = vec4(color, 1.0);
-    return;
   }
 
-  // MISS: no geometry here -> make transparent so background shows through
-  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+  gl_FragColor = vec4(color, 1.0);
 }
 `
