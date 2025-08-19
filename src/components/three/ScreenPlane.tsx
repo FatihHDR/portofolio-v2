@@ -1,4 +1,4 @@
-import React, { VFC } from 'react';
+import React, { useRef, VFC } from 'react';
 import * as THREE from 'three';
 import { Plane } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
@@ -30,10 +30,11 @@ const datas = {
 export const ScreenPlane: VFC = () => {
 	const gui = GUIController.instance.setFolder('Uniforms')
 	gui.addButton(datas, 'random')
-	gui.addNumericSlider(datas, 'scaleX', 0, 10, 0.1, 'scale x').listen()
-	gui.addNumericSlider(datas, 'scaleY', 0, 10, 0.1, 'scale y').listen()
-	gui.addNumericSlider(datas, 'scaleZ', 0, 10, 0.1, 'scale z').listen()
-	gui.addNumericSlider(datas, 'distortion', 0, 1, 0.01).listen()
+  // allow wider ranges so the randomiser can go "wild"
+  gui.addNumericSlider(datas, 'scaleX', 0, 20, 0.1, 'scale x').listen()
+  gui.addNumericSlider(datas, 'scaleY', 0, 20, 0.1, 'scale y').listen()
+  gui.addNumericSlider(datas, 'scaleZ', 0, 20, 0.1, 'scale z').listen()
+  gui.addNumericSlider(datas, 'distortion', 0, 2, 0.01).listen()
 	gui.addCheckBox(datas, 'creepiness').listen()
 	gui.addCheckBox(datas, 'rotation')
 
@@ -50,16 +51,61 @@ export const ScreenPlane: VFC = () => {
 		fragmentShader: fragmentShader
 	}
 
-	const vec = new THREE.Vector2()
-	useFrame(({ size, mouse }) => {
-  datas.rotation && (shader.uniforms.u_time.value += 0.005)
-  // Match the actual canvas aspect to keep the sphere perfectly circular
-  shader.uniforms.u_aspect.value = size.width / size.height
-		shader.uniforms.u_mouse.value.lerp(vec.set(mouse.x / 2, mouse.y / 2), 0.05)
-		shader.uniforms.u_scale.value.set(datas.scaleX, datas.scaleY, datas.scaleZ)
-		shader.uniforms.u_distortion.value = datas.distortion
-		shader.uniforms.u_creepiness.value = datas.creepiness
-	})
+  const vec = new THREE.Vector2()
+
+  // Internal state for subtle random motion
+  const motionRef = useRef({
+    // rotation
+    speed: 0.01,
+    targetSpeed: 0.01,
+    // scales
+    targetScale: new THREE.Vector3(datas.scaleX, datas.scaleY, datas.scaleZ),
+    // distortion
+    targetDistortion: THREE.MathUtils.clamp(datas.distortion, 0, 1),
+    // timing
+    nextShuffle: 0,
+  })
+
+  useFrame(({ size, mouse, clock }) => {
+    const now = clock.getElapsedTime()
+
+    // periodically pick new subtle random targets
+    if (now >= motionRef.current.nextShuffle) {
+      // pick next change time fairly often but random
+      const nextIn = THREE.MathUtils.randFloat(0.8, 3.5) // seconds
+      motionRef.current.nextShuffle = now + nextIn
+
+      // wild rotation speed and direction
+      motionRef.current.targetSpeed = THREE.MathUtils.randFloat(0.01, 0.06) * (Math.random() < 0.5 ? -1 : 1)
+
+      // wild random scale: allow much smaller or much larger values
+      const jitter = () => THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.3, 15.0), 0.3, 15.0)
+      motionRef.current.targetScale.set(jitter(), jitter(), jitter())
+
+      // wild distortion up to >1 for strong effect
+      motionRef.current.targetDistortion = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.0, 1.2), 0, 1.2)
+    }
+
+    // smooth approach to targets
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+    // slightly faster interpolation so "wild" targets are visible
+    motionRef.current.speed = lerp(motionRef.current.speed, motionRef.current.targetSpeed, 0.04)
+
+    datas.scaleX = lerp(datas.scaleX, motionRef.current.targetScale.x, 0.04)
+    datas.scaleY = lerp(datas.scaleY, motionRef.current.targetScale.y, 0.04)
+    datas.scaleZ = lerp(datas.scaleZ, motionRef.current.targetScale.z, 0.04)
+    datas.distortion = lerp(datas.distortion, motionRef.current.targetDistortion, 0.04)
+
+    // advance time for rotation only if enabled
+    if (datas.rotation) shader.uniforms.u_time.value += motionRef.current.speed
+
+    // Match the actual canvas aspect to keep the sphere perfectly circular
+    shader.uniforms.u_aspect.value = size.width / size.height
+    shader.uniforms.u_mouse.value.lerp(vec.set(mouse.x / 2, mouse.y / 2), 0.05)
+    shader.uniforms.u_scale.value.set(datas.scaleX, datas.scaleY, datas.scaleZ)
+    shader.uniforms.u_distortion.value = datas.distortion
+    shader.uniforms.u_creepiness.value = datas.creepiness
+  })
 
 	return (
 		<Plane args={[2, 2]}>
