@@ -120,18 +120,23 @@ a[rel~="noopener"] {
 /* Sound bar control (small animated bars) */
 .header-sound {
 	pointer-events: auto;
-	position: absolute;
-	/* place outside the cinemascope area: pull up and right */
-	right: 12px;
-	top: 8px;
-	z-index: 999;
+	/* place fixed outside the cinemascope area (top-right of viewport)
+	   so it sits above the letterbox / aspect area */
+	position: fixed;
+	right: 14px;
+	top: 10px;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
 }
 .footer-sound {
 	display: inline-flex;
-	gap: 4px; /* tighter */
+	gap: 2px; /* tighter */
 	align-items: end;
 	cursor: pointer;
-	padding: 6px;
+	padding: 4px 6px;
+	background: rgba(255,255,255,0.04);
+	border-radius: 6px;
 }
 .sbar {
 	width: 6px;
@@ -141,7 +146,7 @@ a[rel~="noopener"] {
 	border-radius: 0; /* square corners */
 	transform-origin: bottom center;
 	transition: height 120ms ease;
-	opacity: 0.9;
+	opacity: 0.95;
 }
 
 /* default stopped state */
