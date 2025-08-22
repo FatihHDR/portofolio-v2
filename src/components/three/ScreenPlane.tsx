@@ -109,7 +109,7 @@ export const ScreenPlane: VFC = () => {
       )
 
       // occasional bigger zoom jumps to make the zooming more noticeable
-      if (Math.random() < 0.15) {
+  if (Math.random() < 0.45) {
         motionRef.current.targetCamZ = THREE.MathUtils.clamp(
           THREE.MathUtils.randFloat(datas.camZ - 2.0, datas.camZ + 2.0),
           1.2,
