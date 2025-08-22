@@ -97,15 +97,35 @@ export const BackgroundAudio: VFC = () => {
       window.dispatchEvent(new CustomEvent('bg-audio-state', { detail: { isPlaying: !audio.paused, muted: audio.muted } }))
     }
 
-    window.addEventListener('bg-audio-toggle-mute', onToggle as EventListener)
-    window.addEventListener('bg-audio-request-state', onRequest as EventListener)
+    const onUserGesture = async () => {
+      // user interacted via loading screen - try to unmute and play
+      try {
+        audio.muted = false
+        await audio.play()
+      } catch {
+        try {
+          audio.muted = true
+          await audio.play()
+        } catch {
+          // ignore
+        }
+      }
+      setIsPlaying(!audio.paused)
+      setMuted(audio.muted)
+      window.dispatchEvent(new CustomEvent('bg-audio-state', { detail: { isPlaying: !audio.paused, muted: audio.muted } }))
+    }
+
+  window.addEventListener('bg-audio-toggle-mute', onToggle as EventListener)
+  window.addEventListener('bg-audio-request-state', onRequest as EventListener)
+  window.addEventListener('bg-audio-user-gesture', onUserGesture as EventListener)
 
     return () => {
       audio.removeEventListener('play', onPlay)
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('volumechange', onVolume)
-      window.removeEventListener('bg-audio-toggle-mute', onToggle as EventListener)
-      window.removeEventListener('bg-audio-request-state', onRequest as EventListener)
+  window.removeEventListener('bg-audio-toggle-mute', onToggle as EventListener)
+  window.removeEventListener('bg-audio-request-state', onRequest as EventListener)
+  window.removeEventListener('bg-audio-user-gesture', onUserGesture as EventListener)
     }
   }, [])
 
