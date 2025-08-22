@@ -120,51 +120,58 @@ a[rel~="noopener"] {
 /* Sound bar control (small animated bars) */
 .header-sound {
 	pointer-events: auto;
-	/* place fixed outside the cinemascope area (top-right of viewport)
-	   so it sits above the letterbox / aspect area */
+	/* fixed outside the cinemascope area (top-right of viewport) */
 	position: fixed;
 	right: 14px;
-	top: 10px;
+	top: 30px; /* lowered slightly from 10px */
 	z-index: 9999;
 	display: flex;
 	align-items: center;
 }
+
 .footer-sound {
 	display: inline-flex;
-	gap: 2px; /* tighter */
-	align-items: end;
+	gap: 1px; /* tighter */
+	align-items: flex-end;
 	cursor: pointer;
-	padding: 4px 6px;
-	background: rgba(255,255,255,0.04);
-	border-radius: 6px;
+	padding: 2px 4px;
+	background: transparent; /* make icon background transparent */
+	border-radius: 4px;
 }
+
 .sbar {
 	width: 6px;
-	height: 10px;
-	background: #fff; /* plain white */
+	height: 18px; /* fixed visual height to avoid layout shifts */
+	background: #fff; /* white bars */
 	display: inline-block;
 	border-radius: 0; /* square corners */
 	transform-origin: bottom center;
-	transition: height 120ms ease;
+	transition: transform 140ms ease, opacity 120ms ease;
 	opacity: 0.95;
+	/* keep layout stable by using transforms to scale the bars */
+	transform: scaleY(0.45);
 }
 
 /* default stopped state */
-.footer-sound.stopped .sbar { height: 8px; opacity: 0.6 }
+.footer-sound.stopped .sbar {
+	transform: scaleY(0.45);
+	opacity: 0.6;
+}
 
-/* playing -> animate heights with different delays to simulate music */
+/* playing -> animate scaleY with different delays to simulate music
+   use transform so container doesn't reflow; keep #bar-4 static */
 .footer-sound.playing .sbar {
-	animation: sbar-bounce 700ms infinite ease-in-out;
+	animation: sbar-scale 800ms infinite ease-in-out;
 }
 .footer-sound.playing #bar-1 { animation-delay: -90ms }
 .footer-sound.playing #bar-2 { animation-delay: -40ms }
 .footer-sound.playing #bar-3 { animation-delay: -160ms }
-.footer-sound.playing #bar-4 { animation-delay: -20ms }
+.footer-sound.playing #bar-4 { animation: none; transform: scaleY(1); opacity: 0.95 }
 
-@keyframes sbar-bounce {
-	0% { height: 6px }
-	30% { height: 20px }
-	60% { height: 10px }
-	100% { height: 6px }
+@keyframes sbar-scale {
+	0% { transform: scaleY(0.45) }
+	30% { transform: scaleY(1.0) }
+	60% { transform: scaleY(0.6) }
+	100% { transform: scaleY(0.45) }
 }
 
