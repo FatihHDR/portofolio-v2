@@ -4,6 +4,7 @@ import { Hero } from './Hero';
 import { LinkIconButton } from './LinkIconButton';
 import BackgroundAudio from './BackgroundAudio';
 import LoadingScreen from './LoadingScreen';
+import useIsMobile from '../hooks/useIsMobile';
 
 export const App: VFC = () => {
 	return (
@@ -16,7 +17,7 @@ export const App: VFC = () => {
 			<div className="viewport-cinemascope__content" style={{ position: 'relative' }}>
 				<BackgroundAudio />
 				<LoadingScreen />
-				<TCanvas />
+				<TCanvas isMobile={useIsMobile()} />
 				<Hero />
 				<LinkIconButton
 					imagePath="/assets/icons/github.svg"

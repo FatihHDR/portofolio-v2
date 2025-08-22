@@ -237,3 +237,38 @@ a[rel~="noopener"] {
 .loading-overlay.loading--ready .loader-cta { opacity: 1; }
 .loading-overlay.loading--ready .loader { animation: none; }
 
+/* Mobile specific: prefer non-letterboxed full-viewport layout for narrow screens */
+@media (max-width: 900px), (pointer: coarse) {
+	.viewport-cinemascope {
+		height: 100vh;
+		width: 100vw;
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+	.viewport-cinemascope__content {
+		height: 100vh;
+		width: 100vw;
+	}
+	.letterbox__bar { display: none; }
+
+	.overlay__center { padding-top: 18vh; }
+
+	.hero__title {
+		font-size: clamp(18px, 7vw, 36px);
+		letter-spacing: clamp(2px, 2.6vw, 10px);
+	}
+
+	.overlay__bottom {
+		gap: 14px;
+		padding: 18px 12px 18px;
+		flex-wrap: wrap;
+	}
+
+	.header-sound {
+		right: 8px;
+		top: 12px;
+	}
+
+	.nav__link { font-size: 12px }
+}
+
