@@ -86,50 +86,67 @@ export const ScreenPlane: VFC = () => {
 
     // periodically pick new subtle random targets
     if (now >= motionRef.current.nextShuffle) {
-      // pick next change time fairly often but random
-      const nextIn = THREE.MathUtils.randFloat(0.8, 3.5) // seconds
+  // pick next change time (slightly more frequent so zooms occur visibly)
+  const nextIn = THREE.MathUtils.randFloat(3.0, 10.0) // seconds
       motionRef.current.nextShuffle = now + nextIn
 
-      // wild rotation speed and direction
-  // choose much smaller rotation speeds so auto-rotation is gentler
-  motionRef.current.targetSpeed = THREE.MathUtils.randFloat(0.002, 0.02) * (Math.random() < 0.5 ? -1 : 1)
+      // choose smaller rotation speeds so auto-rotation is gentler
+  // make rotation more noticeable but still calm
+  motionRef.current.targetSpeed = THREE.MathUtils.randFloat(0.003, 0.02) * (Math.random() < 0.5 ? -1 : 1)
 
-      // wild random scale: allow much smaller or much larger values
-      const jitter = () => THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.3, 15.0), 0.3, 15.0)
+      // subtle random scale: keep near defaults for calmer visuals
+      const jitter = () => THREE.MathUtils.clamp(THREE.MathUtils.randFloat(3.5, 7.0), 3.5, 7.0)
       motionRef.current.targetScale.set(jitter(), jitter(), jitter())
 
-      // wild distortion up to >1 for strong effect
+      // modest distortion range for calmer surface
       motionRef.current.targetDistortion = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0.0, 1.2), 0, 1.2)
 
-  // camera wild zoom (in/out) - allow very close (zoom in) but cap zoom-out to a reasonable max
-  motionRef.current.targetCamZ = THREE.MathUtils.randFloat(0.8, 5.0)
+      // camera zoom in/out around default camZ (wider range so it's noticeable)
+      motionRef.current.targetCamZ = THREE.MathUtils.clamp(
+        THREE.MathUtils.randFloat(datas.camZ - 1.4, datas.camZ + 1.4),
+        1.2,
+        6.0
+      )
 
-  // rotation amplitude wildness (bigger range)
-  motionRef.current.targetRotAmp = THREE.MathUtils.randFloat(0.05, 3.5)
+      // occasional bigger zoom jumps to make the zooming more noticeable
+      if (Math.random() < 0.15) {
+        motionRef.current.targetCamZ = THREE.MathUtils.clamp(
+          THREE.MathUtils.randFloat(datas.camZ - 2.0, datas.camZ + 2.0),
+          1.2,
+          6.0
+        )
+      }
+
+    // rotation amplitude increased for clearer motion
+  motionRef.current.targetRotAmp = THREE.MathUtils.randFloat(0.3, 1.8)
     }
 
-    // smooth approach to targets
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-    // slightly faster interpolation so "wild" targets are visible
-    motionRef.current.speed = lerp(motionRef.current.speed, motionRef.current.targetSpeed, 0.04)
+  // smooth approach to targets (slower lerps for calmer motion)
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+  // use smaller interpolation steps so transitions are much slower
+  motionRef.current.speed = lerp(motionRef.current.speed, motionRef.current.targetSpeed, 0.01)
 
-    datas.scaleX = lerp(datas.scaleX, motionRef.current.targetScale.x, 0.04)
-    datas.scaleY = lerp(datas.scaleY, motionRef.current.targetScale.y, 0.04)
-    datas.scaleZ = lerp(datas.scaleZ, motionRef.current.targetScale.z, 0.04)
-    datas.distortion = lerp(datas.distortion, motionRef.current.targetDistortion, 0.04)
+  datas.scaleX = lerp(datas.scaleX, motionRef.current.targetScale.x, 0.01)
+  datas.scaleY = lerp(datas.scaleY, motionRef.current.targetScale.y, 0.01)
+  datas.scaleZ = lerp(datas.scaleZ, motionRef.current.targetScale.z, 0.01)
+  datas.distortion = lerp(datas.distortion, motionRef.current.targetDistortion, 0.01)
 
   // advance time for rotation only if enabled
   if (datas.rotation) shader.uniforms.u_time.value += motionRef.current.speed
 
-  // smooth camera & rotation amplitude
-  // increase lerp for camera so zooms are more noticeable
-  // slow the camera zoom smoothing so zoom in/out feels more gradual
-  motionRef.current.camZ = lerp(motionRef.current.camZ, motionRef.current.targetCamZ, 0.04)
-  // slightly faster for rotation amplitude as well
-  motionRef.current.rotAmp = lerp(motionRef.current.rotAmp, motionRef.current.targetRotAmp, 0.06)
+  // smooth camera & rotation amplitude with delta-time based exponential smoothing for very smooth zooms
+  const dt = clock.getDelta()
+  // smoothing factors (lower => slower)
+  const camSmoothK = 6.0 // responsiveness for camera zoom (larger => faster response)
+  const rotSmoothK = 1.0
+  const camAlpha = 1 - Math.exp(-camSmoothK * Math.max(0, dt))
+  const rotAlpha = 1 - Math.exp(-rotSmoothK * Math.max(0, dt))
+
+  motionRef.current.camZ += (motionRef.current.targetCamZ - motionRef.current.camZ) * camAlpha
+  motionRef.current.rotAmp += (motionRef.current.targetRotAmp - motionRef.current.rotAmp) * rotAlpha
 
   // if autoZoom is enabled, expose the animated camZ/rotAmp to datas so GUI updates
-  if (datas.autoZoom) datas.camZ = THREE.MathUtils.clamp(motionRef.current.camZ, 0.8, 5.0)
+  if (datas.autoZoom) datas.camZ = THREE.MathUtils.clamp(motionRef.current.camZ, 1.2, 6.0)
   datas.rotAmp = motionRef.current.rotAmp
 
     // Match the actual canvas aspect to keep the sphere perfectly circular
@@ -208,8 +225,8 @@ float gyroid(in vec3 p, float t) {
 }
 
 float sdf(vec3 p) {
-  // reduce rotation multiplier so automatic rotation is slower
-  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.12 * u_rot_amp);
+  // increased rotation multiplier for clearer motion while remaining calm
+  vec3 rp = rotate(p, vec3(0.3, 1.0, 0.2), u_time * 0.2 * u_rot_amp);
   float t = (sin(u_time * 0.5 + PI / 2.0) + 1.0) * 0.5; // 0 ~ 1
   
   float sphere = sdSphere(p, 1.0);
