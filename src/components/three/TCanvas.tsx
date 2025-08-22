@@ -22,7 +22,7 @@ export const TCanvas: VFC = () => {
 				<FocusPass />
 				<TintPass />
 			</Effects>
-			{/* helper removed for production portfolio */}
+			{ }
 		</Canvas>
 	)
 }
