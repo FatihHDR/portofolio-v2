@@ -13,38 +13,27 @@ type Props = { isMobile?: boolean }
 export const TCanvas: VFC<Props> = ({ isMobile = false }) => {
 	const OrthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
 
-	// Lightweight mobile fallback: avoid mounting heavy three/canvas on mobile
-	if (isMobile) {
-		return (
-			<div
-				aria-hidden
-				style={{
-					width: '100%',
-					height: '100%',
-					background: 'linear-gradient(180deg, rgba(4,18,40,0.6), rgba(2,8,20,0.8))',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-				}}
-			>
-				{/* lightweight visual for mobile; keeps aesthetic but saves resources */}
-				<img src="/assets/icons/github.svg" alt="visual placeholder" style={{ opacity: 0.06, width: '32vw', maxWidth: 160 }} />
-			</div>
-		)
-	}
+	// Always mount Canvas so mobile still renders similar visual composition.
+	// On mobile we use lighter GL settings and skip postprocessing to keep visuals close
+	// while conserving resources.
+	const canvasProps = isMobile
+		? { dpr: 1, gl: { antialias: false, powerPreference: 'low-power' as const } }
+		: { dpr: (typeof window !== 'undefined' ? window.devicePixelRatio : 1) }
 
 	return (
-		<Canvas camera={OrthographicCamera} dpr={window.devicePixelRatio}>
+		// @ts-ignore react-three-fiber accepts camera instance directly
+		<Canvas camera={OrthographicCamera} {...(canvasProps as any)}>
 			{/* objects */}
 			<ScreenPlane />
-			{/* effects */}
-			<Effects sRGBCorrection={false}>
-				<FXAAPass />
-				<BloomPass />
-				<FocusPass />
-				<TintPass />
-			</Effects>
-			{ }
+			{/* on mobile skip heavy postprocessing passes to approximate look */}
+			{!isMobile && (
+				<Effects sRGBCorrection={false}>
+					<FXAAPass />
+					<BloomPass />
+					<FocusPass />
+					<TintPass />
+				</Effects>
+			)}
 		</Canvas>
 	)
 }
