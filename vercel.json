@@ -1,0 +1,5 @@
+{
+  "installCommand": "CI=1 pnpm install --frozen-lockfile --reporter=silent",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "build"
+}
