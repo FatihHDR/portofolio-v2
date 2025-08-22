@@ -2,7 +2,6 @@ import React, { useRef, VFC } from 'react'
 import * as THREE from 'three'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { extend, useFrame } from '@react-three/fiber'
-import { GUIController } from '../../../modules/gui'
 
 extend({ ShaderPass })
 
@@ -16,10 +15,7 @@ const datas = {
 export const TintPass: VFC = () => {
   const passRef = useRef<ShaderPass>(null)
 
-  const gui = GUIController.instance.setFolder('Tint').open(false)
-  gui.addCheckBox(datas, 'enabled')
-  gui.addNumericSlider(datas, 'intensity', 0, 1, 0.01)
-  gui.addNumericSlider(datas, 'chroma', 0, 0.01, 0.0001)
+  // production: no GUI controls
 
   const shader: THREE.Shader = {
     uniforms: {

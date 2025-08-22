@@ -1,6 +1,5 @@
 import { VFC } from 'react';
 import * as THREE from 'three';
-import { Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { BloomPass } from './postprocessing/BloomPass';
 import { Effects } from './postprocessing/Effects';
@@ -23,8 +22,7 @@ export const TCanvas: VFC = () => {
 				<FocusPass />
 				<TintPass />
 			</Effects>
-			{/* helper */}
-			{process.env.NODE_ENV !== 'production' && <Stats />}
+			{/* helper removed for production portfolio */}
 		</Canvas>
 	)
 }

@@ -2,7 +2,6 @@ import React, { useRef, VFC } from 'react';
 import THREE from 'three';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { useFrame } from '@react-three/fiber';
-import { GUIController } from '../../../modules/gui';
 
 const datas = {
 	enabled: true,
@@ -14,11 +13,7 @@ const datas = {
 export const FocusPass: VFC = () => {
 	const passRef = useRef<ShaderPass>(null)
 
-	const gui = GUIController.instance.setFolder('Focus').open(false)
-	gui.addCheckBox(datas, 'enabled')
-	gui.addNumericSlider(datas, 'focus', -0.5, 0.5, 0.01)
-	gui.addNumericSlider(datas, 'blur', 0, 1, 0.01)
-	gui.addNumericSlider(datas, 'samples', 10, 100, 10)
+	// production: no GUI controls
 
 	const shader: THREE.Shader = {
 		uniforms: {

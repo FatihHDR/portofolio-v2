@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { Plane } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { fresnel, rotate } from '../../modules/glsl';
-import { GUIController } from '../../modules/gui';
 
 const rand = (min: number, max: number, digit: number) => {
 	let num = Math.random() * (max - min) + min
@@ -31,18 +30,7 @@ const datas = {
 }
 
 export const ScreenPlane: VFC = () => {
-	const gui = GUIController.instance.setFolder('Uniforms')
-	gui.addButton(datas, 'random')
-  // allow wider ranges so the randomiser can go "wild"
-  gui.addNumericSlider(datas, 'scaleX', 0, 20, 0.1, 'scale x').listen()
-  gui.addNumericSlider(datas, 'scaleY', 0, 20, 0.1, 'scale y').listen()
-  gui.addNumericSlider(datas, 'scaleZ', 0, 20, 0.1, 'scale z').listen()
-  gui.addNumericSlider(datas, 'distortion', 0, 2, 0.01).listen()
-  gui.addCheckBox(datas, 'autoZoom').listen()
-  gui.addNumericSlider(datas, 'camZ', 0.8, 5, 0.1, 'camera z').listen()
-  gui.addNumericSlider(datas, 'rotAmp', 0.0, 3.0, 0.01, 'rotation amp').listen()
-	gui.addCheckBox(datas, 'creepiness').listen()
-	gui.addCheckBox(datas, 'rotation')
+  // production: GUI removed
 
 	const shader: THREE.Shader = {
 		uniforms: {
